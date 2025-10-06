@@ -4,6 +4,11 @@ import { v } from "convex/values";
 export const getCustomer = query({
   args: { customerId: v.id("customers") },
   handler: async (ctx, args) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
 
     const customer = await ctx.db.get(args.customerId);
     if (!customer) return null;
@@ -27,6 +32,11 @@ export const addNote = mutation({
     note: v.string(),
   },
   handler: async (ctx, args) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
 
     await ctx.db.patch(args.customerId, {
       notes: args.note,
@@ -37,7 +47,7 @@ export const addNote = mutation({
       type: "note_added",
       description: `Note added: ${args.note.substring(0, 50)}...`,
       timestamp: Date.now(),
-      agentId: undefined,
+      agentId: identity.email!, // Store the agent's email
     });
   },
 });
@@ -48,6 +58,11 @@ export const addTag = mutation({
     tag: v.string(),
   },
   handler: async (ctx, args) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
 
     const customer = await ctx.db.get(args.customerId);
     if (!customer) throw new Error("Customer not found");
@@ -62,7 +77,7 @@ export const addTag = mutation({
       type: "tag_added",
       description: `Tag added: ${args.tag}`,
       timestamp: Date.now(),
-      agentId: undefined,
+      agentId: identity.email!, // Store the agent's email
     });
   },
 });

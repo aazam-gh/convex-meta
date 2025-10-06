@@ -17,7 +17,7 @@ export const generateAIResponse = internalAction({
   },
   handler: async (ctx, args): Promise<{ response: string; knowledgeSnippets: any[] }> => {
     try {
-      // Search for relevant knowledge
+      // Search for relevant knowledge (this will use the user's namespace)
       const relevantChunks: any[] = await ctx.runAction(api.knowledgeBase.searchKnowledge, {
         query: args.customerMessage,
         limit: 3,

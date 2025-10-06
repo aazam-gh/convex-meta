@@ -5,7 +5,14 @@ import { internal } from "./_generated/api";
 export const listConversations = query({
   args: {},
   handler: async (ctx) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
 
+    // For now, return all conversations since this is a multi-tenant system
+    // In a real app, you might want to filter by user or organization
     const conversations = await ctx.db
       .query("conversations")
       .withIndex("by_last_message")
@@ -36,6 +43,11 @@ export const listConversations = query({
 export const getConversation = query({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) return null;
@@ -62,6 +74,11 @@ export const sendMessage = mutation({
     type: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) throw new Error("Conversation not found");
@@ -74,7 +91,7 @@ export const sendMessage = mutation({
       sender: "agent",
       channel: conversation.channel,
       timestamp: Date.now(),
-      agentId: undefined,
+      agentId: identity.email!, // Store the agent's email
       isAiGenerated: false,
     });
 
@@ -89,7 +106,7 @@ export const sendMessage = mutation({
       type: "message_sent",
       description: `Agent sent a message: ${args.content.substring(0, 50)}...`,
       timestamp: Date.now(),
-      agentId: undefined,
+      agentId: identity.email!, // Store the agent's email
     });
 
     return messageId;
@@ -102,6 +119,12 @@ export const sendDummyCustomerMessage = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) throw new Error("Conversation not found");
 
@@ -179,6 +202,12 @@ export const storeAIMessage = internalMutation({
 export const markAsRead = mutation({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
     await ctx.db.patch(args.conversationId, {
       unreadCount: 0,
     });

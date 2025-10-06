@@ -40,7 +40,8 @@ function AuthenticatedContent() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/dashboard");
+    // Use replace instead of push to avoid back button issues
+    router.replace("/dashboard");
   }, [router]);
 
   return (

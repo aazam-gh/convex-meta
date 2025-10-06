@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Dashboard } from "../../components/Dashboard";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
@@ -12,27 +13,20 @@ export default function DashboardPage() {
 
   const handleSignOut = async () => {
     try {
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            router.push("/");
-          },
-        },
-      });
+      await authClient.signOut();
+      // Force a hard redirect to prevent any state issues
+      window.location.href = "/";
     } catch (error) {
       console.error("Error signing out:", error);
+      // Even if there's an error, redirect to home
+      window.location.href = "/";
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Unauthenticated>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Redirecting to sign in...</p>
-          </div>
-        </div>
+        <UnauthenticatedContent />
       </Unauthenticated>
 
       <AuthLoading>
@@ -47,6 +41,28 @@ export default function DashboardPage() {
       <Authenticated>
         <DashboardContent onSignOut={handleSignOut} />
       </Authenticated>
+    </div>
+  );
+}
+
+function UnauthenticatedContent() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Add a small delay to ensure auth state has updated
+    const timer = setTimeout(() => {
+      router.replace("/signin");
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [router]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Redirecting to sign in...</p>
+      </div>
     </div>
   );
 }
