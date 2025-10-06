@@ -5,14 +5,6 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
 
-// Define a type for the document data
-interface Document {
-  _id: Id<"documents">;
-  filename: string;
-  status: "completed" | "processing" | "failed";
-  uploadedAt: number;
-  chunksCount?: number;
-}
 
 
 export function KnowledgeBaseUpload() {

@@ -34,7 +34,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const { data, error } = await authClient.signUp.email({
+      await authClient.signUp.email({
         email: formData.email,
         password: formData.password,
         name: formData.name,
@@ -51,7 +51,7 @@ export default function SignUpPage() {
           setIsLoading(false);
         },
       });
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
       setIsLoading(false);
     }

@@ -66,9 +66,9 @@ export function AIChat() {
       const aiMessage: Message = {
         role: "ai",
         text: response.answer,
-        chunks: response.chunks?.map((entry: { content: string, source: string }) => ({
-          content: entry.content,
-          source: entry.source,
+        chunks: response.chunks?.map((entry: Record<string, unknown>) => ({
+          content: (entry.content as string) || (entry.text as string) || "",
+          source: (entry.source as string) || (entry.title as string) || "Unknown",
         })),
         createdAt: Date.now(),
       };

@@ -21,7 +21,7 @@ export default function SignInPage() {
     setError("");
 
     try {
-      const { data, error } = await authClient.signIn.email({
+      await authClient.signIn.email({
         email: formData.email,
         password: formData.password,
         callbackURL: "/dashboard",
@@ -38,7 +38,7 @@ export default function SignInPage() {
           setIsLoading(false);
         },
       });
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
       setIsLoading(false);
     }

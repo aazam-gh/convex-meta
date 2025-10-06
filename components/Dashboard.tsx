@@ -1,7 +1,7 @@
 // Dashboard.tsx - Clean UI Component
 
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
@@ -31,10 +31,11 @@ export function Dashboard() {
   const [replyText, setReplyText] = useState("");
 
   // Convex queries and actions
-  const facebookMessagesQuery = useQuery(api.facebook.listMessages, { limit: 50 }) || [];
+  const facebookMessagesQuery = useQuery(api.facebook.listMessages, { limit: 50 });
   const sendFacebookReply = useAction(api.facebook.replyToFacebookMessage);
 
   const selectedFacebookMessage: FacebookMessage | undefined = useMemo(() => {
+    if (!facebookMessagesQuery) return undefined;
     return facebookMessagesQuery.find(
       (m) => m._id === selectedFacebookMessageId
     );
@@ -84,10 +85,10 @@ export function Dashboard() {
             <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
               <div className="p-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900">Facebook Messages</h2>
-                <p className="text-sm text-gray-500 mt-1">{facebookMessagesQuery.length} messages</p>
+                <p className="text-sm text-gray-500 mt-1">{facebookMessagesQuery?.length || 0} messages</p>
               </div>
               <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-                {facebookMessagesQuery.length === 0 ? (
+                {!facebookMessagesQuery || facebookMessagesQuery.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">No Facebook messages yet</div>
                 ) : (
                   facebookMessagesQuery.map((msg) => (

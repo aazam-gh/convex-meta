@@ -9,7 +9,6 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 export default function DashboardPage() {
-  const router = useRouter();
 
   const handleSignOut = async () => {
     try {

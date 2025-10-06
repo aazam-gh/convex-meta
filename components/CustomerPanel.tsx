@@ -1,40 +1,16 @@
 // CustomerPanel.tsx - Clean UI Component
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
+import Image from "next/image";
 
 interface CustomerPanelProps {
   customerId: Id<"customers">;
 }
 
-interface KnowledgeSnippet {
-  content: string;
-  source: string;
-  relevanceScore: number;
-}
 
-interface Message {
-  _id: Id<"messages">;
-  content: string;
-  sender: "agent" | "customer" | "ai";
-  isAiGenerated?: boolean;
-  knowledgeSnippets?: KnowledgeSnippet[];
-}
-
-interface Customer {
-    _id: Id<"customers">;
-    name: string;
-    email?: string;
-    phone?: string;
-    avatar?: string;
-    channels: string[];
-    tags: string[];
-    notes?: string;
-    lastActivity: number;
-    activities: { _id: string, description: string, timestamp: number }[];
-}
 
 export function CustomerPanel({ customerId }: CustomerPanelProps) {
   const [newNote, setNewNote] = useState("");
@@ -54,7 +30,7 @@ export function CustomerPanel({ customerId }: CustomerPanelProps) {
   );
   
   // Find the latest AI message
-  const latestAIMessage = fullConversation?.messages?.filter((msg: any) => msg.isAiGenerated).pop();
+  const latestAIMessage = fullConversation?.messages?.filter((msg: Record<string, unknown>) => msg.isAiGenerated).pop();
 
 
   const handleAddNote = async (e: React.FormEvent) => {
@@ -127,9 +103,11 @@ export function CustomerPanel({ customerId }: CustomerPanelProps) {
         {/* Profile */}
         <div className="text-center mb-6">
           {customer.avatar ? (
-            <img
+            <Image
               src={customer.avatar}
               alt={customer.name}
+              width={64}
+              height={64}
               className="w-16 h-16 rounded-full object-cover mx-auto mb-3"
             />
           ) : (

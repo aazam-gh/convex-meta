@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
 
 export default function FacebookPagesManager() {
@@ -49,7 +49,7 @@ export default function FacebookPagesManager() {
         conv => conv.conversationId === selectedConversation
       )?.participants;
       
-      const recipientId = participants?.find(p => !p.senderId.startsWith("page_"))?.senderId;
+      const recipientId = participants?.find((p: Record<string, unknown>) => !(p.senderId as string).startsWith("page_"))?.senderId;
       
       if (!recipientId) {
         alert("No valid recipient found for this conversation");
@@ -138,8 +138,8 @@ export default function FacebookPagesManager() {
                 <div>
                   <div className="font-medium">
                     {conversation.participants
-                      .filter(p => !p.senderId.startsWith("page_"))
-                      .map(p => p.senderName || p.senderId)
+                      .filter((p: Record<string, unknown>) => !(p.senderId as string).startsWith("page_"))
+                      .map((p: Record<string, unknown>) => (p.senderName as string) || (p.senderId as string))
                       .join(", ")}
                   </div>
                   <div className="text-sm text-gray-600">

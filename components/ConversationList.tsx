@@ -3,22 +3,8 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
+import Image from "next/image";
 
-interface Conversation {
-  _id: Id<"conversations">;
-  channel: string;
-  status: string;
-  unreadCount: number;
-  lastMessageAt: number;
-  customer: {
-    name: string;
-    avatar?: string;
-  } | null;
-  lastMessage: {
-    content: string;
-    sender: string;
-  } | null;
-}
 
 interface ConversationListProps {
   selectedId: Id<"conversations"> | null;
@@ -84,9 +70,11 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
                 {/* Avatar */}
                 <div className="flex-shrink-0">
                   {conversation.customer?.avatar ? (
-                    <img
+                    <Image
                       src={conversation.customer.avatar}
                       alt={conversation.customer.name}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (

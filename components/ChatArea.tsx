@@ -3,37 +3,11 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Id } from "../convex/_generated/dataModel"; 
+import { Id } from "../convex/_generated/dataModel";
+import Image from "next/image"; 
 
-interface KnowledgeSnippet {
-  content: string;
-  source: string;
-  relevanceScore: number;
-}
 
-interface Message {
-  _id: Id<"messages">;
-  content: string;
-  sender: "agent" | "customer" | "ai"; // Enforcing allowed senders for UI logic
-  timestamp: number;
-  type: string;
-  isAiGenerated?: boolean;
-  knowledgeSnippets?: KnowledgeSnippet[];
-}
 
-interface Customer {
-  _id: Id<"customers">;
-  name: string;
-  avatar?: string;
-}
-
-interface Conversation {
-  _id: Id<"conversations">;
-  channel: string;
-  status: string;
-  customer: Customer | null;
-  messages: Message[];
-}
 
 interface ChatAreaProps {
   conversationId: Id<"conversations"> | null;
@@ -149,9 +123,11 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             {conversation.customer?.avatar ? (
-              <img
+              <Image
                 src={conversation.customer.avatar}
                 alt={conversation.customer.name}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
