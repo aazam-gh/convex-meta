@@ -12,7 +12,6 @@ import { KnowledgeBaseUpload } from "./KnowledgeBaseUpload";
 import { AIChat } from "./AIChat";
 import { LeadManagementDashboard } from "./LeadManagementDashboard";
 import FacebookPagesManager from "./FacebookPagesManager";
-import { GoogleIntegrations } from "./GoogleIntegrations";
 import GoogleCalendarIntegration from "./GoogleCalendarIntegration";
 
 interface FacebookMessage {
@@ -247,11 +246,6 @@ export function Dashboard() {
           </div>
         )}
 
-        {activeTab === "google-integrations" && (
-          <div className="flex-1 p-6">
-            <GoogleIntegrations />
-          </div>
-        )}
 
         {activeTab === "google-calendar" && (
           <div className="flex-1 p-6">
@@ -267,7 +261,7 @@ export function Dashboard() {
           </div>
         )}
 
-        {activeTab !== "inbox" && activeTab !== "knowledge" && activeTab !== "ai-chat" && activeTab !== "lead-management" && activeTab !== "facebook-pages" && activeTab !== "google-integrations" && activeTab !== "google-calendar" && (
+        {activeTab !== "inbox" && activeTab !== "knowledge" && activeTab !== "ai-chat" && activeTab !== "lead-management" && activeTab !== "facebook-pages" && activeTab !== "google-calendar" && (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">

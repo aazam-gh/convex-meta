@@ -1,15 +1,14 @@
 // components/knowledgebase.tsx
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
 
-
-
 export function KnowledgeBaseUpload() {
   const [isUploading, setIsUploading] = useState(false);
   const [url, setUrl] = useState("");
+  const [urlError, setUrlError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Convex queries and mutations
@@ -19,6 +18,43 @@ export function KnowledgeBaseUpload() {
   const deleteDocument = useMutation(api.knowledgeBase.deleteDocument);
   const documents = useQuery(api.knowledgeBase.listDocuments) || [];
 
+  // Determine the allowed domain based on previously scraped documents
+  const allowedDomain = useMemo(() => {
+    const webDocuments = documents.filter(doc => doc.sourceType === "web" && doc.sourceUrl);
+    if (webDocuments.length === 0) {
+      return null; // No domain restriction yet
+    }
+    
+    // Get the domain from the first web document
+    try {
+      const firstUrl = new URL(webDocuments[0].sourceUrl!);
+      return firstUrl.hostname.toLowerCase();
+    } catch {
+      return null;
+    }
+  }, [documents]);
+
+  // Validate URL based on domain restrictions
+  const validateUrl = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+      
+      // If no domain restriction yet, allow any valid URL
+      if (!allowedDomain) {
+        return null; // Valid URL
+      }
+      
+      // Check if the hostname matches the allowed domain or is a subdomain of it
+      if (hostname === allowedDomain || hostname.endsWith(`.${allowedDomain}`)) {
+        return null; // Valid URL
+      }
+      
+      return `Only URLs from ${allowedDomain} are allowed for scraping. You've already scraped from this domain.`;
+    } catch (error) {
+      return "Please enter a valid URL.";
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -58,6 +94,15 @@ export function KnowledgeBaseUpload() {
   const handleIngestUrl = async () => {
     const trimmed = url.trim();
     if (!trimmed) return;
+    
+    // Validate URL before proceeding
+    const validationError = validateUrl(trimmed);
+    if (validationError) {
+      setUrlError(validationError);
+      return;
+    }
+    
+    setUrlError(""); // Clear any previous errors
     setIsUploading(true);
     try {
       await ingestWebsite({ url: trimmed });
@@ -130,15 +175,34 @@ export function KnowledgeBaseUpload() {
       {/* URL Ingest Section */}
       <div className="mb-6">
         <div className="border rounded-lg p-4 bg-gray-50">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Add Website URL</h4>
-          <p className="text-sm text-gray-500 mb-4">Scrape a webpage and index its content into your knowledge base.</p>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">
+            Add Website URL
+            {allowedDomain && (
+              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                🔒 Domain Locked
+              </span>
+            )}
+          </h4>
+          <p className="text-sm text-gray-500 mb-4">
+            Scrape a webpage and index its content into your knowledge base.
+            {allowedDomain ? (
+              <span className="font-medium text-blue-600"> You can only scrape from {allowedDomain} now.</span>
+            ) : (
+              <span className="font-medium text-green-600"> You can scrape from any domain for your first upload.</span>
+            )}
+          </p>
           <div className="flex gap-2">
             <input
               type="url"
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com/article"
-              className="flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+              onChange={(e) => {
+                setUrl(e.target.value);
+                if (urlError) setUrlError(""); // Clear error when user types
+              }}
+              placeholder={allowedDomain ? `https://${allowedDomain}/article` : "https://example.com/article"}
+              className={`flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/60 ${
+                urlError ? "border-red-500" : ""
+              }`}
               disabled={isUploading}
             />
             <button
@@ -149,6 +213,11 @@ export function KnowledgeBaseUpload() {
               {isUploading ? "Scraping…" : "Scrape & Add"}
             </button>
           </div>
+          {urlError && (
+            <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+              {urlError}
+            </div>
+          )}
         </div>
       </div>
 
