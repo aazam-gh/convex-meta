@@ -36,12 +36,14 @@ export const createAuth = (
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID as string,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        // Always issue refresh tokens & allow re-consent
         accessType: "offline", 
         prompt: "select_account consent",
+        // Basic scopes for authentication
         scope: [
-          "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/userinfo.profile",
-          "https://www.googleapis.com/auth/calendar"
+          "openid",
+          "email", 
+          "profile",
         ],
       },
     },
@@ -61,42 +63,6 @@ export const getCurrentUser = query({
   },
 });
 
-// Get Google access token for the current user
-export const getGoogleAccessToken = query({
-  args: {},
-  handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) {
-      return null;
-    }
-
-    try {
-      // Get user accounts to find Google account
-      const accounts = await ctx.db
-        .query("account")
-        .withIndex("by_user", (q) => q.eq("userId", user._id))
-        .filter((q) => q.eq(q.field("providerId"), "google"))
-        .collect();
-
-      const googleAccount = accounts.find(account => account.providerId === "google");
-      
-      console.log("Google account for token:", googleAccount ? {
-        providerId: googleAccount.providerId,
-        hasAccessToken: !!googleAccount.accessToken,
-        scope: googleAccount.scope
-      } : "No Google account found");
-      
-      if (googleAccount && googleAccount.accessToken) {
-        return googleAccount.accessToken;
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Error getting Google access token:", error);
-      return null;
-    }
-  },
-});
 
 // Simple test query to verify database connection
 export const testDatabaseConnection = query({
@@ -105,10 +71,13 @@ export const testDatabaseConnection = query({
     try {
       console.log("=== TEST: Database connection test ===");
       
-      // Test basic database operations
-      const userCount = await ctx.db.query("user").collect();
-      const accountCount = await ctx.db.query("account").collect();
-      const sessionCount = await ctx.db.query("session").collect();
+      // Test basic database operations (using system for component tables)
+      // @ts-ignore - Component tables exist at runtime
+      const userCount = await ctx.db.system.query("user").collect();
+      // @ts-ignore - Component tables exist at runtime
+      const accountCount = await ctx.db.system.query("account").collect();
+      // @ts-ignore - Component tables exist at runtime
+      const sessionCount = await ctx.db.system.query("session").collect();
       
       console.log("Direct query results:", {
         users: userCount.length,
@@ -176,22 +145,26 @@ export const debugAllUsersAndAccounts = query({
       const currentUser = await authComponent.getAuthUser(ctx);
       console.log("Current user from authComponent:", currentUser);
       
-      const allUsers = await ctx.db.query("user").collect();
+      // @ts-ignore - Component tables exist at runtime
+      const allUsers = await ctx.db.system.query("user").collect();
       console.log("All users from db:", allUsers.length, allUsers);
       
-      const allAccounts = await ctx.db.query("account").collect();
+      // @ts-ignore - Component tables exist at runtime
+      const allAccounts = await ctx.db.system.query("account").collect();
       console.log("All accounts from db:", allAccounts.length, allAccounts);
       
-      const allSessions = await ctx.db.query("session").collect();
+      // @ts-ignore - Component tables exist at runtime
+      const allSessions = await ctx.db.system.query("session").collect();
       console.log("All sessions from db:", allSessions.length, allSessions);
 
       // Additional debugging for the current user
       let currentUserAccounts: any[] = [];
       if (currentUser) {
         console.log("Looking for accounts for user:", currentUser._id);
-        currentUserAccounts = await ctx.db
+        // @ts-ignore - Component tables exist at runtime
+        currentUserAccounts = await (ctx.db.system as any)
           .query("account")
-          .withIndex("by_user", (q) => q.eq("userId", currentUser._id))
+          .filter((q: any) => q.eq(q.field("userId"), currentUser._id))
           .collect();
         console.log("Current user accounts found:", currentUserAccounts.length, currentUserAccounts);
       }
@@ -203,20 +176,20 @@ export const debugAllUsersAndAccounts = query({
           name: currentUser.name,
           createdAt: currentUser.createdAt
         } : null,
-        currentUserAccounts: currentUserAccounts.map(account => ({
+        currentUserAccounts: currentUserAccounts.map((account: any) => ({
           _id: account._id,
           providerId: account.providerId,
           scope: account.scope,
           hasAccessToken: !!account.accessToken,
           createdAt: account.createdAt
         })),
-        allUsers: allUsers.map(user => ({
+        allUsers: (allUsers as any[]).map((user: any) => ({
           _id: user._id,
           email: user.email,
           name: user.name,
           createdAt: user.createdAt
         })),
-        allAccounts: allAccounts.map(account => ({
+        allAccounts: (allAccounts as any[]).map((account: any) => ({
           _id: account._id,
           userId: account.userId,
           providerId: account.providerId,
@@ -224,7 +197,7 @@ export const debugAllUsersAndAccounts = query({
           hasAccessToken: !!account.accessToken,
           createdAt: account.createdAt
         })),
-        allSessions: allSessions.map(session => ({
+        allSessions: (allSessions as any[]).map((session: any) => ({
           _id: session._id,
           userId: session.userId,
           expiresAt: session.expiresAt,
@@ -251,9 +224,9 @@ export const debugUserAccount = query({
     }
 
     try {
-      const accounts = await ctx.db
+      const accounts = await (ctx.db.system as any)
         .query("account")
-        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .filter((q: any) => q.eq(q.field("userId"), user._id))
         .collect();
 
       return {
@@ -262,7 +235,7 @@ export const debugUserAccount = query({
           email: user.email,
           name: user.name
         },
-        accounts: accounts.map(account => ({
+        accounts: (accounts as any[]).map((account: any) => ({
           _id: account._id,
           providerId: account.providerId,
           scope: account.scope,
@@ -274,60 +247,6 @@ export const debugUserAccount = query({
     } catch (error) {
       console.error("Error getting user account data:", error);
       return { user: null, accounts: [], error: error instanceof Error ? error.message : 'Unknown error' };
-    }
-  },
-});
-
-// Check if user has Google Calendar scope
-export const hasGoogleCalendarScope = query({
-  args: {},
-  handler: async (ctx) => {
-    console.log("=== DEBUG: hasGoogleCalendarScope called ===");
-    
-    const user = await authComponent.getAuthUser(ctx);
-    console.log("User from authComponent:", user);
-    
-    if (!user) {
-      console.log("No user found, returning false");
-      return false;
-    }
-
-    try {
-      // Get user accounts to find Google account
-      console.log("Looking for accounts for user:", user._id);
-      const accounts = await ctx.db
-        .query("account")
-        .withIndex("by_user", (q) => q.eq("userId", user._id))
-        .filter((q) => q.eq(q.field("providerId"), "google"))
-        .collect();
-
-      console.log("All accounts for user:", accounts.length, accounts);
-
-      const googleAccount = accounts.find(account => account.providerId === "google");
-      
-      console.log("Google account found:", googleAccount ? {
-        providerId: googleAccount.providerId,
-        scope: googleAccount.scope,
-        hasAccessToken: !!googleAccount.accessToken
-      } : "No Google account found");
-      
-      if (googleAccount && googleAccount.scope) {
-        // Scope is stored as a comma-separated string
-        const scopeArray = googleAccount.scope.split(',').map((s: string) => s.trim());
-        const hasCalendarScope = scopeArray.includes("https://www.googleapis.com/auth/calendar");
-        console.log("Calendar scope check:", { 
-          scope: googleAccount.scope, 
-          scopeArray, 
-          hasCalendarScope 
-        });
-        return hasCalendarScope;
-      }
-
-      console.log("No Google account or scope found, returning false");
-      return false;
-    } catch (error) {
-      console.error("Error checking Google Calendar scope:", error);
-      return false;
     }
   },
 });

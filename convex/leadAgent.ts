@@ -103,24 +103,10 @@ export const generateLeadAgentResponse = internalAction({
         })),
       });
 
-      // If action is to schedule a meeting, create Google Calendar event
+      // Note: Google Calendar integration removed
+      // If you want to schedule meetings, implement your calendar integration here
       if (response.action === "schedule_meeting") {
-        // Get conversation data for customer info
-        const conversation = await ctx.runQuery(internal.conversations.internalGetConversation, {
-          conversationId: args.conversationId,
-        });
-
-        await ctx.runAction(internal.googleCalendar.createGoogleCalendarEvent, {
-          leadId: lead!._id,
-          customerId: lead!.customerId,
-          title: `Sales Consultation - ${conversation?.customer?.name || "Customer"}`,
-          description: `Sales consultation for lead with score ${newScore}. Pain points: ${qualificationAnalysis.updatedQualificationData.painPoints.join(", ")}`,
-          startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
-          endTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(), // 1 hour later
-          timeZone: "UTC",
-          customerEmail: conversation?.customer?.email || "customer@example.com",
-          customerName: conversation?.customer?.name || "Customer",
-        });
+        console.log("Meeting scheduling requested but calendar integration not configured");
       }
 
       return {

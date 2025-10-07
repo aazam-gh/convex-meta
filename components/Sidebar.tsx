@@ -12,7 +12,6 @@ export function Sidebar() {
     { id: "ai-chat", label: "AI Chat", icon: "🤖", href: "/dashboard/ai-chat" },
     { id: "lead-management", label: "Lead Management", icon: "🎯", href: "/dashboard/lead-management" },
     { id: "knowledge", label: "Knowledge Base", icon: "📚", href: "/dashboard/knowledge" },
-    { id: "google-calendar", label: "Google Calendar", icon: "📅", href: "/dashboard/google-calendar" },
     { id: "contacts", label: "Contacts", icon: "👥", href: "/dashboard/contacts" },
     { id: "analytics", label: "Analytics", icon: "📊", href: "/dashboard/analytics" },
     { id: "settings", label: "Settings", icon: "⚙️", href: "/dashboard/settings" },

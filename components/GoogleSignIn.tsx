@@ -1,6 +1,6 @@
 "use client";
 
-import { signInWithGoogle, requestGoogleScopes, GOOGLE_SCOPES } from "@/lib/auth-client";
+import { signInWithGoogle } from "@/lib/auth-client";
 import { useState } from "react";
 
 interface GoogleSignInProps {
@@ -57,73 +57,5 @@ export function GoogleSignIn({
       </svg>
       {children || (isLoading ? "Signing in..." : "Sign in with Google")}
     </button>
-  );
-}
-
-interface GoogleScopeRequestProps {
-  scopes: string[];
-  onSuccess?: () => void;
-  onError?: (error: Error) => void;
-  className?: string;
-  children?: React.ReactNode;
-}
-
-export function GoogleScopeRequest({ 
-  scopes, 
-  onSuccess, 
-  onError, 
-  className = "",
-  children 
-}: GoogleScopeRequestProps) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleRequestScopes = async () => {
-    try {
-      setIsLoading(true);
-      await requestGoogleScopes(scopes);
-      onSuccess?.();
-    } catch (error) {
-      console.error("Google scope request failed:", error);
-      onError?.(error as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <button
-      onClick={handleRequestScopes}
-      disabled={isLoading}
-      className={`flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
-    >
-      {children || (isLoading ? "Requesting access..." : "Request Google Access")}
-    </button>
-  );
-}
-
-// Pre-configured scope request components
-export function GoogleDriveAccess({ onSuccess, onError, className }: Omit<GoogleScopeRequestProps, 'scopes'>) {
-  return (
-    <GoogleScopeRequest
-      scopes={GOOGLE_SCOPES.DRIVE}
-      onSuccess={onSuccess}
-      onError={onError}
-      className={className}
-    >
-      Add Google Drive Access
-    </GoogleScopeRequest>
-  );
-}
-
-export function GoogleCalendarAccess({ onSuccess, onError, className }: Omit<GoogleScopeRequestProps, 'scopes'>) {
-  return (
-    <GoogleScopeRequest
-      scopes={GOOGLE_SCOPES.CALENDAR}
-      onSuccess={onSuccess}
-      onError={onError}
-      className={className}
-    >
-      Add Google Calendar Access
-    </GoogleScopeRequest>
   );
 }
