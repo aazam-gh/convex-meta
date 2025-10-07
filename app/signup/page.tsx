@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { GoogleSignIn } from "@/components/GoogleSignIn";
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -62,6 +63,14 @@ export default function SignUpPage() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleGoogleSuccess = () => {
+    router.push("/dashboard");
+  };
+
+  const handleGoogleError = (error: Error) => {
+    setError(`Google sign-in failed: ${error.message}`);
   };
 
   return (
@@ -162,6 +171,25 @@ export default function SignUpPage() {
             </button>
           </div>
         </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <GoogleSignIn
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              className="w-full"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

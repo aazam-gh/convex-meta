@@ -285,4 +285,21 @@ export const askQuestion = action({
       };
     },
   });
+
+// Internal version of searchKnowledge for use by internal actions
+export const internalSearchKnowledge = internalAction({
+  args: { query: v.string(), limit: v.optional(v.number()) },
+  returns: v.array(v.any()),
+  handler: async (ctx, { query, limit }) => {
+    // Use a default namespace for internal searches
+    const { results } = await rag.search(ctx, {
+      namespace: "system", // Use system namespace for internal searches
+      query,
+      limit: limit ?? 5,
+      vectorScoreThreshold: 0.5,
+    });
+
+    return results;
+  },
+});
   

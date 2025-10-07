@@ -9,16 +9,17 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 export default function DashboardPage() {
+  const router = useRouter();
 
   const handleSignOut = async () => {
     try {
       await authClient.signOut();
-      // Force a hard redirect to prevent any state issues
-      window.location.href = "/";
+      // Redirect after successful sign out
+      router.push("/");
     } catch (error) {
       console.error("Error signing out:", error);
       // Even if there's an error, redirect to home
-      window.location.href = "/";
+      router.push("/");
     }
   };
 

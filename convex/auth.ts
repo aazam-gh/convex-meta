@@ -22,11 +22,23 @@ export const createAuth = (
       disabled: optionsOnly,
     },
     baseURL: siteUrl,
+    trustedOrigins: [
+      "http://localhost:3000", // Frontend URL
+    ],
     database: authComponent.adapter(ctx),
     // Configure simple, non-verified email/password to get started
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
+    },
+    // Configure Google SSO
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        accessType: "offline", 
+        prompt: "select_account consent", 
+      },
     },
     plugins: [
       // The Convex plugin is required for Convex compatibility

@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
-import Image from "next/image"; 
+import Image from "next/image";
+import { LeadManagement } from "./LeadManagement";
+import { AppointmentList } from "./AppointmentList"; 
 
 
 
@@ -16,6 +18,7 @@ interface ChatAreaProps {
 export function ChatArea({ conversationId }: ChatAreaProps) {
   const [message, setMessage] = useState("");
   const [dummyMessage, setDummyMessage] = useState("");
+  const [activeTab, setActiveTab] = useState<"chat" | "lead" | "appointments">("chat");
   
   // Convex queries and mutations
   const conversation = useQuery(
@@ -176,89 +179,143 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
             </form>
           </div>
         </div>
+
+        {/* Tab Navigation */}
+        <div className="mt-4 border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab("chat")}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "chat"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Chat
+            </button>
+            <button
+              onClick={() => setActiveTab("lead")}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "lead"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Lead Management
+            </button>
+            <button
+              onClick={() => setActiveTab("appointments")}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "appointments"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Appointments
+            </button>
+          </nav>
+        </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {conversation.messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
-            <p>No messages in this conversation yet.</p>
-            <p className="text-sm mt-1">Send a message or use the test button to get started!</p>
-          </div>
-        ) : (
-          conversation.messages.map((msg) => (
-            <div key={msg._id}>
-              <div
-                className={`flex ${msg.sender === "customer" ? "justify-start" : "justify-end"}`}
-              >
-                <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${getSenderColor(msg.sender)}`}
-                >
-                  <div className="flex items-center space-x-2 mb-1">
-                    <p className="text-xs font-medium">
-                      {getSenderLabel(msg.sender)}
-                    </p>
-                    {msg.isAiGenerated && (
-                      <span className="px-1.5 py-0.5 bg-purple-200 text-purple-800 text-xs rounded-full font-medium">
-                        AI
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm">{msg.content}</p>
-                  <p className={`text-xs mt-1 ${getSenderTextColor(msg.sender)}`}>
-                    {formatTime(msg.timestamp)}
-                  </p>
-                </div>
+      {/* Tab Content */}
+      <div className="flex-1 overflow-y-auto">
+        {activeTab === "chat" && (
+          <div className="p-6 space-y-4">
+            {conversation.messages.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                <p>No messages in this conversation yet.</p>
+                <p className="text-sm mt-1">Send a message or use the test button to get started!</p>
               </div>
-
-              {/* Knowledge Snippets */}
-              {msg.knowledgeSnippets && msg.knowledgeSnippets.length > 0 && (
-                // Note: The margin logic is based on the sender being 'agent' or 'ai' to align the snippet under the message bubble
-                <div className={`mt-2 ${msg.sender === "customer" ? "ml-4 mr-auto" : "mr-4 ml-auto"} max-w-xs lg:max-w-md`}>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                    <p className="text-xs font-medium text-purple-800 mb-2">
-                      📚 Knowledge Sources Used:
-                    </p>
-                    <div className="space-y-2">
-                      {msg.knowledgeSnippets.map((snippet, index) => (
-                        <div key={index} className="text-xs">
-                          <p className="text-purple-700 font-medium">{snippet.source}</p>
-                          <p className="text-purple-600 mt-1">{snippet.content}</p>
-                          <p className="text-purple-500 mt-1">
-                            Relevance: {(snippet.relevanceScore * 100).toFixed(1)}%
-                          </p>
-                        </div>
-                      ))}
+            ) : (
+              conversation.messages.map((msg) => (
+                <div key={msg._id}>
+                  <div
+                    className={`flex ${msg.sender === "customer" ? "justify-start" : "justify-end"}`}
+                  >
+                    <div
+                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${getSenderColor(msg.sender)}`}
+                    >
+                      <div className="flex items-center space-x-2 mb-1">
+                        <p className="text-xs font-medium">
+                          {getSenderLabel(msg.sender)}
+                        </p>
+                        {msg.isAiGenerated && (
+                          <span className="px-1.5 py-0.5 bg-purple-200 text-purple-800 text-xs rounded-full font-medium">
+                            AI
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm">{msg.content}</p>
+                      <p className={`text-xs mt-1 ${getSenderTextColor(msg.sender)}`}>
+                        {formatTime(msg.timestamp)}
+                      </p>
                     </div>
                   </div>
+
+                  {/* Knowledge Snippets */}
+                  {msg.knowledgeSnippets && msg.knowledgeSnippets.length > 0 && (
+                    // Note: The margin logic is based on the sender being 'agent' or 'ai' to align the snippet under the message bubble
+                    <div className={`mt-2 ${msg.sender === "customer" ? "ml-4 mr-auto" : "mr-4 ml-auto"} max-w-xs lg:max-w-md`}>
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                        <p className="text-xs font-medium text-purple-800 mb-2">
+                          📚 Knowledge Sources Used:
+                        </p>
+                        <div className="space-y-2">
+                          {msg.knowledgeSnippets.map((snippet, index) => (
+                            <div key={index} className="text-xs">
+                              <p className="text-purple-700 font-medium">{snippet.source}</p>
+                              <p className="text-purple-600 mt-1">{snippet.content}</p>
+                              <p className="text-purple-500 mt-1">
+                                Relevance: {(snippet.relevanceScore * 100).toFixed(1)}%
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === "lead" && conversationId && (
+          <div className="p-6">
+            <LeadManagement conversationId={conversationId} />
+          </div>
+        )}
+
+        {activeTab === "appointments" && conversationId && (
+          <div className="p-6">
+            <AppointmentList customerId={conversation.customerId} />
+          </div>
         )}
       </div>
 
-      {/* Message Input */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-white">
-        <form onSubmit={handleSendMessage} className="flex space-x-3">
-          <div className="flex-1">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!message.trim()}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Send
-          </button>
-        </form>
-      </div>
+      {/* Message Input - Only show for chat tab */}
+      {activeTab === "chat" && (
+        <div className="px-6 py-4 border-t border-gray-200 bg-white">
+          <form onSubmit={handleSendMessage} className="flex space-x-3">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!message.trim()}
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

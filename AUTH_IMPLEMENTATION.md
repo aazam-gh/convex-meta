@@ -26,7 +26,7 @@ import { createAuthClient } from "better-auth/react";
 import { convexClient } from "@convex-dev/better-auth/client/plugins";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001",
+  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   plugins: [convexClient()], // Required for Convex compatibility
 });
 ```
@@ -163,7 +163,7 @@ All authentication operations include proper error handling:
 ## Testing the Implementation
 
 1. **Start development server**: `npm run dev`
-2. **Visit landing page**: `http://localhost:3001/`
+2. **Visit landing page**: `http://localhost:3000/`
 3. **Test sign up**: Create new account
 4. **Test sign in**: Authenticate existing user
 5. **Test dashboard**: Access protected area

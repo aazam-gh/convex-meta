@@ -92,6 +92,91 @@ const applicationTables = {
   numbers: defineTable({
     value: v.number(),
   }),
+
+  // Lead management system
+  leads: defineTable({
+    customerId: v.id("customers"),
+    conversationId: v.id("conversations"),
+    status: v.string(), // "prospect", "qualified", "nurturing", "converted", "lost"
+    leadScore: v.number(), // 0-100 lead qualification score
+    qualificationData: v.object({
+      budget: v.optional(v.string()),
+      timeline: v.optional(v.string()),
+      painPoints: v.array(v.string()),
+      interests: v.array(v.string()),
+      companySize: v.optional(v.string()),
+      decisionMaker: v.optional(v.boolean()),
+    }),
+    lastQualificationAt: v.number(),
+    assignedAgent: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  })
+    .index("by_customer", ["customerId"])
+    .index("by_status", ["status"])
+    .index("by_lead_score", ["leadScore"])
+    .index("by_conversation", ["conversationId"]),
+
+  // Calendar booking system
+  appointments: defineTable({
+    leadId: v.id("leads"),
+    customerId: v.id("customers"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    startTime: v.number(), // Unix timestamp
+    endTime: v.number(), // Unix timestamp
+    status: v.string(), // "scheduled", "confirmed", "completed", "cancelled", "no_show"
+    calendarEventId: v.optional(v.string()), // External calendar event ID
+    meetingLink: v.optional(v.string()),
+    location: v.optional(v.string()),
+    reminderSent: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_lead", ["leadId"])
+    .index("by_customer", ["customerId"])
+    .index("by_status", ["status"])
+    .index("by_start_time", ["startTime"]),
+
+  // Agent conversation state tracking
+  agentStates: defineTable({
+    conversationId: v.id("conversations"),
+    currentPhase: v.string(), // "greeting", "qualification", "objection_handling", "closing", "booking"
+    contextData: v.object({
+      qualificationProgress: v.number(), // 0-100
+      objectionsRaised: v.array(v.string()),
+      painPointsIdentified: v.array(v.string()),
+      interestsExpressed: v.array(v.string()),
+      budgetMentioned: v.optional(v.boolean()),
+      timelineMentioned: v.optional(v.boolean()),
+      decisionMakerConfirmed: v.optional(v.boolean()),
+    }),
+    lastUpdated: v.number(),
+    agentPersonality: v.string(), // "consultative", "direct", "nurturing"
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_phase", ["currentPhase"]),
+
+  // Google Calendar integration
+  googleCalendarEvents: defineTable({
+    leadId: v.id("leads"),
+    customerId: v.id("customers"),
+    googleEventId: v.string(), // External Google Calendar event ID
+    meetingLink: v.optional(v.string()),
+    status: v.string(), // "scheduled", "confirmed", "cancelled", "completed", "no_show"
+    startTime: v.number(),
+    endTime: v.number(),
+    timeZone: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    location: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_lead", ["leadId"])
+    .index("by_customer", ["customerId"])
+    .index("by_google_event_id", ["googleEventId"])
+    .index("by_status", ["status"])
+    .index("by_start_time", ["startTime"]),
 };
 
 export default defineSchema({

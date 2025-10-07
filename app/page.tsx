@@ -2,22 +2,21 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+import { useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
 
 export default function HomePage() {
   const router = useRouter();
-
-  useEffect(() => {
-    // This will be handled by the Authenticated component
-  }, [router]);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Authenticated>
-        <AuthenticatedContent />
+        <AuthenticatedContent onRedirect={() => setShouldRedirect(true)} />
       </Authenticated>
 
       <Unauthenticated>
@@ -36,13 +35,18 @@ export default function HomePage() {
   );
 }
 
-function AuthenticatedContent() {
+function AuthenticatedContent({ onRedirect }: { onRedirect: () => void }) {
   const router = useRouter();
+  const currentUser = useQuery(api.auth.getCurrentUser);
 
   useEffect(() => {
-    // Use replace instead of push to avoid back button issues
-    router.replace("/dashboard");
-  }, [router]);
+    // Only redirect if we have confirmed user data
+    // This prevents redirect loops during sign out
+    if (currentUser) {
+      onRedirect();
+      router.replace("/dashboard");
+    }
+  }, [currentUser, router, onRedirect]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -10,12 +10,18 @@
 
 import type * as ai from "../ai.js";
 import type * as auth from "../auth.js";
+import type * as calendar from "../calendar.js";
 import type * as conversations from "../conversations.js";
 import type * as customers from "../customers.js";
 import type * as facebook from "../facebook.js";
 import type * as getText from "../getText.js";
+import type * as googleCalendar from "../googleCalendar.js";
+import type * as googleCalendarMutations from "../googleCalendarMutations.js";
+import type * as googleCalendarQueries from "../googleCalendarQueries.js";
 import type * as http from "../http.js";
 import type * as knowledgeBase from "../knowledgeBase.js";
+import type * as leadAgent from "../leadAgent.js";
+import type * as leads from "../leads.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as sampleData from "../sampleData.js";
 
@@ -36,12 +42,18 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   auth: typeof auth;
+  calendar: typeof calendar;
   conversations: typeof conversations;
   customers: typeof customers;
   facebook: typeof facebook;
   getText: typeof getText;
+  googleCalendar: typeof googleCalendar;
+  googleCalendarMutations: typeof googleCalendarMutations;
+  googleCalendarQueries: typeof googleCalendarQueries;
   http: typeof http;
   knowledgeBase: typeof knowledgeBase;
+  leadAgent: typeof leadAgent;
+  leads: typeof leads;
   myFunctions: typeof myFunctions;
   sampleData: typeof sampleData;
 }>;

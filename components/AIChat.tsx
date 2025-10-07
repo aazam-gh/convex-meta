@@ -1,7 +1,7 @@
 // AIChat.tsx - Clean UI Component
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useAction } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 
 type Message = {
@@ -33,8 +33,9 @@ export function AIChat() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
 
-  // Convex action
+  // Convex action and mutation
   const askQuestion = useAction(api.knowledgeBase.askQuestion);
+  const createTestConversation = useMutation(api.conversations.createTestConversation);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -95,6 +96,19 @@ export function AIChat() {
     }
   };
 
+  const handleCreateTestConversation = async () => {
+    try {
+      await createTestConversation({
+        customerName: "Test Customer",
+        customerEmail: "test@example.com",
+      });
+      alert("Test conversation created! Check the conversations list to see the Lead Management tabs.");
+    } catch (error) {
+      console.error("Failed to create test conversation:", error);
+      alert("Failed to create test conversation. Please try again.");
+    }
+  };
+
   const toggleSources = (idx: number) => {
     setExpandedSources((prev) => {
       const next = new Set(prev);
@@ -124,14 +138,24 @@ export function AIChat() {
           <h2 className="text-lg font-semibold">AI Knowledge Chat</h2>
           <p className="text-xs text-gray-500">Ask questions and see cited sources</p>
         </div>
-        <button
-          type="button"
-          onClick={clearChat}
-          className="text-sm px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50"
-          aria-label="Clear chat history"
-        >
-          Clear
-        </button>
+        <div className="flex space-x-2">
+          <button
+            type="button"
+            onClick={handleCreateTestConversation}
+            className="text-sm px-3 py-1.5 rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200"
+            aria-label="Create test conversation"
+          >
+            Create Test Conversation
+          </button>
+          <button
+            type="button"
+            onClick={clearChat}
+            className="text-sm px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50"
+            aria-label="Clear chat history"
+          >
+            Clear
+          </button>
+        </div>
       </div>
 
       {/* Chat history */}
