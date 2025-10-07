@@ -9,11 +9,13 @@ import { Id } from "../convex/_generated/dataModel";
 
 export function KnowledgeBaseUpload() {
   const [isUploading, setIsUploading] = useState(false);
+  const [url, setUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Convex queries and mutations
   const generateUploadUrl = useMutation(api.knowledgeBase.generateUploadUrl);
   const uploadDocument = useMutation(api.knowledgeBase.uploadDocument);
+  const ingestWebsite = useMutation(api.knowledgeBase.ingestWebsite);
   const deleteDocument = useMutation(api.knowledgeBase.deleteDocument);
   const documents = useQuery(api.knowledgeBase.listDocuments) || [];
 
@@ -48,6 +50,21 @@ export function KnowledgeBaseUpload() {
     } catch (err) {
       console.error("Upload failed:", err);
       alert("Upload failed. Try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleIngestUrl = async () => {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    setIsUploading(true);
+    try {
+      await ingestWebsite({ url: trimmed });
+      setUrl("");
+    } catch (err) {
+      console.error("URL ingest failed:", err);
+      alert("Failed to scrape URL. Check the address and try again.");
     } finally {
       setIsUploading(false);
     }
@@ -107,6 +124,31 @@ export function KnowledgeBaseUpload() {
           >
             {isUploading ? "Uploading..." : "Choose File"}
           </button>
+        </div>
+      </div>
+
+      {/* URL Ingest Section */}
+      <div className="mb-6">
+        <div className="border rounded-lg p-4 bg-gray-50">
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Add Website URL</h4>
+          <p className="text-sm text-gray-500 mb-4">Scrape a webpage and index its content into your knowledge base.</p>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com/article"
+              className="flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+              disabled={isUploading}
+            />
+            <button
+              onClick={handleIngestUrl}
+              disabled={isUploading || !url.trim()}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              {isUploading ? "Scraping…" : "Scrape & Add"}
+            </button>
+          </div>
         </div>
       </div>
 

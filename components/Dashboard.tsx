@@ -13,6 +13,7 @@ import { AIChat } from "./AIChat";
 import { LeadManagementDashboard } from "./LeadManagementDashboard";
 import FacebookPagesManager from "./FacebookPagesManager";
 import { GoogleIntegrations } from "./GoogleIntegrations";
+import GoogleCalendarIntegration from "./GoogleCalendarIntegration";
 
 interface FacebookMessage {
   _id: Id<"facebookMessages">;
@@ -252,7 +253,21 @@ export function Dashboard() {
           </div>
         )}
 
-        {activeTab !== "inbox" && activeTab !== "knowledge" && activeTab !== "ai-chat" && activeTab !== "lead-management" && activeTab !== "facebook-pages" && activeTab !== "google-integrations" && (
+        {activeTab === "google-calendar" && (
+          <div className="flex-1 p-6">
+            <div className="max-w-6xl mx-auto">
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Google Calendar</h1>
+                <p className="text-gray-600">
+                  View and manage your Google Calendar events
+                </p>
+              </div>
+              <GoogleCalendarIntegration />
+            </div>
+          </div>
+        )}
+
+        {activeTab !== "inbox" && activeTab !== "knowledge" && activeTab !== "ai-chat" && activeTab !== "lead-management" && activeTab !== "facebook-pages" && activeTab !== "google-integrations" && activeTab !== "google-calendar" && (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">

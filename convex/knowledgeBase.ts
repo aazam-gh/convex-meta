@@ -68,13 +68,17 @@ export const uploadDocument = mutation({
       if (!document) throw new Error("Document not found");
   
       try {
-        const file = await ctx.storage.get(document.storageId);
+        const storageId = document.storageId;
+        if (!storageId) {
+          throw new Error("Document missing storageId");
+        }
+        const file = await ctx.storage.get(storageId);
         if (!file) throw new Error("File not found in storage");
   
         const buffer = await file.arrayBuffer();
   
         const text = await getText(ctx, {
-          storageId: document.storageId,
+          storageId,
           filename: document.filename,
           bytes: buffer,
           mimeType: file.type,
@@ -176,7 +180,9 @@ export const deleteDocument = mutation({
       }
     }
 
-    await ctx.storage.delete(doc.storageId);
+    if (doc.storageId) {
+      await ctx.storage.delete(doc.storageId);
+    }
     await ctx.db.delete(documentId);
   },
 });
@@ -196,6 +202,106 @@ export const listDocuments = query({
       .withIndex("by_uploaded_by", (q) => q.eq("uploadedBy", identity.email!))
       .order("desc")
       .collect();
+  },
+});
+
+export const ingestWebsite = mutation({
+  args: { url: v.string(), title: v.optional(v.string()) },
+  handler: async (ctx, { url, title }) => {
+    // Ensure user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const filename = title || url;
+
+    const documentId = await ctx.db.insert("documents", {
+      filename,
+      // No storageId for web sources
+      uploadedBy: identity.email!,
+      uploadedAt: Date.now(),
+      status: "processing",
+      sourceType: "web",
+      sourceUrl: url,
+    } as any);
+
+    await ctx.scheduler.runAfter(0, internal.knowledgeBase.processWebsite, {
+      documentId,
+    });
+
+    return documentId;
+  },
+});
+
+export const processWebsite = internalAction({
+  args: { documentId: v.id("documents") },
+  handler: async (ctx, { documentId }) => {
+    const document = await ctx.runQuery(internal.knowledgeBase.getDocument, {
+      documentId,
+    });
+    if (!document) throw new Error("Document not found");
+    if (document.sourceType !== "web" || !document.sourceUrl) {
+      throw new Error("Document is not a web source");
+    }
+
+    try {
+      const apiKey = process.env.FIRECRAWL_API_KEY;
+      if (!apiKey) throw new Error("Missing FIRECRAWL_API_KEY env var");
+
+      const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url: document.sourceUrl,
+          formats: ["markdown"],
+          onlyMainContent: true,
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Firecrawl error: ${res.status} ${errText}`);
+      }
+
+      const data: any = await res.json();
+      // Firecrawl may return { markdown, content, ... }
+      const text: string = data.markdown || data.content || JSON.stringify(data);
+
+      const chunks = splitTextIntoChunks(text, 500);
+
+      const entryIds: string[] = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const { entryId } = await rag.add(ctx, {
+          namespace: document.uploadedBy ?? "system",
+          text: chunks[i],
+          metadata: {
+            filename: document.filename,
+            chunkIndex: i,
+            uploadedBy: document.uploadedBy ?? "system",
+            sourceType: "web",
+            sourceUrl: document.sourceUrl,
+          },
+        });
+        entryIds.push(entryId as string);
+      }
+
+      await ctx.runMutation(internal.knowledgeBase.updateDocumentStatus, {
+        documentId,
+        status: "completed",
+        chunksCount: chunks.length,
+        entryIds,
+      });
+    } catch (error) {
+      console.error("Error processing website:", error);
+      await ctx.runMutation(internal.knowledgeBase.updateDocumentStatus, {
+        documentId,
+        status: "failed",
+      });
+    }
   },
 });
   

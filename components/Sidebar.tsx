@@ -13,6 +13,7 @@ interface SidebarProps {
       { id: "lead-management", label: "Lead Management", icon: "🎯" },
       { id: "knowledge", label: "Knowledge Base", icon: "📚" },
       { id: "google-integrations", label: "Google Integrations", icon: "🔗" },
+      { id: "google-calendar", label: "Google Calendar", icon: "📅" },
       { id: "contacts", label: "Contacts", icon: "👥" },
       { id: "analytics", label: "Analytics", icon: "📊" },
       { id: "settings", label: "Settings", icon: "⚙️" },

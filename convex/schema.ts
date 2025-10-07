@@ -81,12 +81,15 @@ const applicationTables = {
 
   documents: defineTable({
     filename: v.string(),
-    storageId: v.id("_storage"),
+    storageId: v.optional(v.id("_storage")),
     uploadedBy: v.optional(v.string()),
     uploadedAt: v.number(),
     status: v.string(), // "processing", "completed", "failed"
     chunksCount: v.optional(v.number()),
     entryIds: v.optional(v.array(v.string())), // ✅ store RAG entryIds
+    // Source metadata for ingestion types
+    sourceType: v.optional(v.string()), // "file" | "web"
+    sourceUrl: v.optional(v.string()),
   }).index("by_uploaded_by", ["uploadedBy"]),
 
   numbers: defineTable({
@@ -181,4 +184,50 @@ const applicationTables = {
 
 export default defineSchema({
   ...applicationTables,
+  // Better Auth tables
+  user: defineTable({
+    id: v.string(),
+    name: v.string(),
+    email: v.string(),
+    emailVerified: v.boolean(),
+    image: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_email", ["email"]),
+
+  session: defineTable({
+    id: v.string(),
+    expiresAt: v.number(),
+    token: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    userId: v.string(),
+  }).index("by_user", ["userId"]),
+
+  account: defineTable({
+    id: v.string(),
+    accountId: v.string(),
+    providerId: v.string(),
+    userId: v.string(),
+    accessToken: v.optional(v.string()),
+    refreshToken: v.optional(v.string()),
+    idToken: v.optional(v.string()),
+    accessTokenExpiresAt: v.optional(v.number()),
+    refreshTokenExpiresAt: v.optional(v.number()),
+    scope: v.optional(v.string()),
+    password: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  verification: defineTable({
+    id: v.string(),
+    identifier: v.string(),
+    value: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_identifier", ["identifier"]),
 });

@@ -244,3 +244,37 @@ export const internalGetGoogleCalendarEventByStatus = internalQuery({
       .collect();
   },
 });
+
+// New query to fetch Google Calendar events for the current month
+export const getCurrentMonthEvents = query({
+  args: {
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  returns: v.array(v.object({
+    id: v.string(),
+    summary: v.string(),
+    start: v.object({
+      dateTime: v.optional(v.string()),
+      date: v.optional(v.string()),
+    }),
+    end: v.object({
+      dateTime: v.optional(v.string()),
+      date: v.optional(v.string()),
+    }),
+    hangoutLink: v.optional(v.string()),
+    location: v.optional(v.string()),
+    status: v.string(),
+    description: v.optional(v.string()),
+  })),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // This will be called from the frontend to fetch events from Google Calendar API
+    // The actual API call will be made from the frontend using the user's access token
+    return [];
+  },
+});
