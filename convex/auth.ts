@@ -50,7 +50,7 @@ export const createAuth = (
         clientId: process.env.FACEBOOK_CLIENT_ID as string,
         clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
         // Facebook scopes for authentication
-        scope: ["email", "public_profile"],
+        scopes: ["email", "public_profile"],
       },
     },
     plugins: [
