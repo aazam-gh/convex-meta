@@ -52,6 +52,8 @@ export const createAuth = (
         configId: process.env.FACEBOOK_CONFIG_ID as string,
         // Facebook scopes for authentication
         scopes: ["email", "public_profile"],
+        // Additional fields to retrieve from Facebook
+        fields: ["id", "name", "email", "picture"],
       },
     },
     plugins: [
