@@ -24,6 +24,7 @@ export const createAuth = (
     baseURL: siteUrl,
     trustedOrigins: [
       "http://localhost:3000", // Frontend URL
+      "https://omni-chat.netlify.app", // Production URL
     ],
     database: authComponent.adapter(ctx),
     // Configure simple, non-verified email/password to get started
@@ -52,12 +53,7 @@ export const createAuth = (
         // Facebook scopes for authentication and page management
         scopes: [
           "email", 
-          "public_profile",
-          "pages_manage_messaging",  // Send messages on behalf of pages
-          "pages_read_engagement",   // Read page engagement data
-          "pages_show_list",         // Get list of user's pages
-          "pages_manage_metadata",   // Manage page metadata
-          "business_management"      // Access business accounts
+          "public_profile",// Access business accounts
         ],
         // Additional fields to retrieve from Facebook
         fields: ["id", "name", "email", "picture"],
