@@ -11,3 +11,10 @@ export const signInWithGoogle = async () => {
     provider: "google",
   });
 };
+
+// Facebook SSO helper function
+export const signInWithFacebook = async () => {
+  return await authClient.signIn.social({
+    provider: "facebook",
+  });
+};

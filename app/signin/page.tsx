@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { GoogleSignIn } from "@/components/GoogleSignIn";
+import { FacebookSignIn } from "@/components/FacebookSignIn";
 
 export default function SignInPage() {
   const [formData, setFormData] = useState({
@@ -59,6 +60,14 @@ export default function SignInPage() {
 
   const handleGoogleError = (error: Error) => {
     setError(`Google sign-in failed: ${error.message}`);
+  };
+
+  const handleFacebookSuccess = () => {
+    router.push("/dashboard");
+  };
+
+  const handleFacebookError = (error: Error) => {
+    setError(`Facebook sign-in failed: ${error.message}`);
   };
 
   return (
@@ -164,10 +173,15 @@ export default function SignInPage() {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 space-y-3">
             <GoogleSignIn
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
+              className="w-full"
+            />
+            <FacebookSignIn
+              onSuccess={handleFacebookSuccess}
+              onError={handleFacebookError}
               className="w-full"
             />
           </div>
