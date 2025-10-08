@@ -11,7 +11,7 @@ import { Sidebar } from "./Sidebar";
 import { KnowledgeBaseUpload } from "./KnowledgeBaseUpload";
 import { AIChat } from "./AIChat";
 import { LeadManagementDashboard } from "./LeadManagementDashboard";
-import FacebookPagesManager from "./FacebookPagesManager";
+import { FacebookPagesManager } from "./FacebookPagesManager";
 
 interface FacebookMessage {
   _id: Id<"facebookMessages">;

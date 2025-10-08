@@ -49,9 +49,16 @@ export const createAuth = (
       facebook: {
         clientId: process.env.FACEBOOK_CLIENT_ID as string,
         clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
-        configId: process.env.FACEBOOK_CONFIG_ID as string,
-        // Facebook scopes for authentication
-        scopes: ["email", "public_profile"],
+        // Facebook scopes for authentication and page management
+        scopes: [
+          "email", 
+          "public_profile",
+          "pages_manage_messaging",  // Send messages on behalf of pages
+          "pages_read_engagement",   // Read page engagement data
+          "pages_show_list",         // Get list of user's pages
+          "pages_manage_metadata",   // Manage page metadata
+          "business_management"      // Access business accounts
+        ],
         // Additional fields to retrieve from Facebook
         fields: ["id", "name", "email", "picture"],
       },

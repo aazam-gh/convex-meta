@@ -2,6 +2,7 @@
 import { mutation, query, action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import { authComponent } from "./auth";
 
 export const storeFacebookMessage = mutation({
   args: {
@@ -84,11 +85,137 @@ export const listMessages = query({
 // Facebook Pages API Integration
 
 /**
- * Fetch conversations from Facebook Pages API
+ * Get the current user's Facebook access token
+ */
+export const getCurrentUserFacebookToken = query({
+  args: {},
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) {
+      return null;
+    }
+
+    try {
+      // @ts-ignore - Component tables exist at runtime
+      const accounts = await (ctx.db.system as any)
+        .query("account")
+        .filter((q: any) => q.eq(q.field("userId"), user._id))
+        .filter((q: any) => q.eq(q.field("providerId"), "facebook"))
+        .collect();
+
+      if (accounts.length === 0) {
+        return null;
+      }
+
+      return accounts[0].accessToken || null;
+    } catch (error) {
+      console.error("Error getting Facebook access token:", error);
+      return null;
+    }
+  },
+});
+
+/**
+ * Get user's Facebook pages using their access token
+ */
+export const getUserPages = action({
+  args: {
+    userAccessToken: v.string(),
+  },
+  returns: v.array(v.object({
+    id: v.string(),
+    name: v.string(),
+    category: v.optional(v.string()),
+    access_token: v.string(),
+    tasks: v.array(v.string()),
+  })),
+  handler: async (ctx, args) => {
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v23.0/me/accounts?access_token=${args.userAccessToken}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Facebook API error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      console.error("Error fetching user pages:", error);
+      throw error;
+    }
+  },
+});
+
+/**
+ * Get current user's Facebook pages (convenience function)
+ */
+export const getCurrentUserPages = action({
+  args: {},
+  returns: v.array(v.object({
+    id: v.string(),
+    name: v.string(),
+    category: v.optional(v.string()),
+    access_token: v.string(),
+    tasks: v.array(v.string()),
+  })),
+  handler: async (ctx, args): Promise<Array<{
+    id: string;
+    name: string;
+    category?: string;
+    access_token: string;
+    tasks: string[];
+  }>> => {
+    const userToken: string | null = await ctx.runQuery(api.facebook.getCurrentUserFacebookToken, {});
+    if (!userToken) {
+      throw new Error("User not authenticated with Facebook");
+    }
+
+    return await ctx.runAction(api.facebook.getUserPages, {
+      userAccessToken: userToken,
+    });
+  },
+});
+
+/**
+ * Get page access token for a specific page
+ */
+export const getPageAccessToken = action({
+  args: {
+    pageId: v.string(),
+    userAccessToken: v.string(),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v23.0/${args.pageId}?fields=access_token&access_token=${args.userAccessToken}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Facebook API error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.access_token;
+    } catch (error) {
+      console.error("Error getting page access token:", error);
+      throw error;
+    }
+  },
+});
+
+/**
+ * Fetch conversations from Facebook Pages API using user access token
  */
 export const fetchPageConversations = action({
   args: {
-    pageId: v.optional(v.string()),
+    pageId: v.string(),
+    userAccessToken: v.string(),
     limit: v.optional(v.number()),
   },
   returns: v.array(v.object({
@@ -100,26 +227,34 @@ export const fetchPageConversations = action({
     updated_time: v.string(),
     message_count: v.number(),
   })),
-  handler: async (ctx, args) => {
-    const PAGE_ACCESS_TOKEN = process.env.FB_PAGE_ACCESS_TOKEN;
-    if (!PAGE_ACCESS_TOKEN) {
-      throw new Error("Facebook Page Access Token not configured");
-    }
-
-    const pageId = args.pageId || "me";
+  handler: async (ctx, args): Promise<Array<{
+    id: string;
+    participants: Array<{
+      id: string;
+      name?: string;
+    }>;
+    updated_time: string;
+    message_count: number;
+  }>> => {
     const limit = args.limit || 25;
 
     try {
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/${pageId}/conversations?fields=id,participants,updated_time,message_count&limit=${limit}&access_token=${PAGE_ACCESS_TOKEN}`
+      // First get the page access token
+      const pageAccessToken: string = await ctx.runAction(api.facebook.getPageAccessToken, {
+        pageId: args.pageId,
+        userAccessToken: args.userAccessToken,
+      });
+
+      const response: Response = await fetch(
+        `https://graph.facebook.com/v23.0/${args.pageId}/conversations?fields=id,participants,updated_time,message_count&limit=${limit}&access_token=${pageAccessToken}`
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData: any = await response.json();
         throw new Error(`Facebook API error: ${errorData.error?.message || response.statusText}`);
       }
 
-      const data = await response.json();
+      const data: any = await response.json();
       return data.data || [];
     } catch (error) {
       console.error("Error fetching Facebook conversations:", error);
@@ -206,6 +341,7 @@ export const fetchConversationMessages = action({
 export const syncPageMessages = action({
   args: {
     pageId: v.optional(v.string()),
+    userAccessToken: v.string(),
     conversationLimit: v.optional(v.number()),
     messageLimit: v.optional(v.number()),
   },
@@ -227,7 +363,8 @@ export const syncPageMessages = action({
     try {
       // Fetch conversations
       const conversations = await ctx.runAction(api.facebook.fetchPageConversations, {
-        pageId: args.pageId,
+        pageId: args.pageId || "me",
+        userAccessToken: args.userAccessToken,
         limit: args.conversationLimit || 10,
       });
 

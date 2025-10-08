@@ -16,7 +16,10 @@ export function KnowledgeBaseUpload() {
   const uploadDocument = useMutation(api.knowledgeBase.uploadDocument);
   const ingestWebsite = useMutation(api.knowledgeBase.ingestWebsite);
   const deleteDocument = useMutation(api.knowledgeBase.deleteDocument);
-  const documents = useQuery(api.knowledgeBase.listDocuments) || [];
+  const documentsQuery = useQuery(api.knowledgeBase.listDocuments);
+  
+  // Memoize documents to prevent unnecessary re-renders
+  const documents = useMemo(() => documentsQuery || [], [documentsQuery]);
 
   // Determine the allowed domain based on previously scraped documents
   const allowedDomain = useMemo(() => {
@@ -51,7 +54,7 @@ export function KnowledgeBaseUpload() {
       }
       
       return `Only URLs from ${allowedDomain} are allowed for scraping. You've already scraped from this domain.`;
-    } catch (error) {
+    } catch {
       return "Please enter a valid URL.";
     }
   };

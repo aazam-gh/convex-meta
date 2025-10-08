@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
@@ -10,13 +10,11 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 
 export default function HomePage() {
-  const router = useRouter();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Authenticated>
-        <AuthenticatedContent onRedirect={() => setShouldRedirect(true)} />
+        <AuthenticatedContent onRedirect={() => {}} />
       </Authenticated>
 
       <Unauthenticated>

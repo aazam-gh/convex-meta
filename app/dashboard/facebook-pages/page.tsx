@@ -1,6 +1,6 @@
 "use client";
 
-import FacebookPagesManager from "../../../components/FacebookPagesManager";
+import { FacebookPagesManager } from "../../../components/FacebookPagesManager";
 
 export default function FacebookPagesPage() {
   return (
